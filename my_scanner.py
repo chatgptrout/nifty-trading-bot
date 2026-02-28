@@ -1,35 +1,19 @@
 import streamlit as st
 import yfinance as yf
-import pandas as pd
 
-# Dashboard Title
-st.title("📈 Nifty Live Trading Bot")
+st.title("📈 Nifty Live Tracker")
 
-# Data Fetching Function
-def get_signals():
-    ticker = "^NSEI"
-    data = yf.download(tickers=ticker, period='1d', interval='1m', progress=False)
-    
+# Sirf ek baar data check karne ka function
+def check_price():
+    data = yf.download("^NSEI", period='1d', interval='1m', progress=False)
     if not data.empty:
-        current_price = float(data['Close'].iloc[-1])
-        avg_5min = float(data['Close'].tail(5).mean())
-        
-        # Metrics display
-        st.metric("Nifty 50 Live Price", f"₹{current_price:.2f}")
-        
-        if current_price > avg_5min:
-            st.success("🚀 SIGNAL: Trend is UP (Bullish)")
-        else:
-            st.error("📉 SIGNAL: Trend is DOWN (Bearish)")
-            
-        # Chart display
+        price = float(data['Close'].iloc[-1])
+        st.metric("Nifty Price", f"₹{price:.2f}")
         st.line_chart(data['Close'])
     else:
-        st.error("Data fetch nahi ho raha. Market hours check karein.")
+        st.error("Data nahi mil raha.")
 
-# Auto-run function (Bina loop ke)
-get_signals()
+check_price()
 
-# Manual Refresh Button
-if st.button('Update Live Price'):
+if st.button('Refresh'):
     st.rerun()
