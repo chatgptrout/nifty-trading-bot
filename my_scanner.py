@@ -1,31 +1,31 @@
+import streamlit as st
 import yfinance as yf
-import time
+import pandas as pd
+
+# Streamlit UI
+st.title("📈 Nifty Live Tracker")
 
 def check_market():
-    ticker = "^NSEI" # Nifty 50
-    print(f"Checking {ticker}...")
-    
-    # Live data nikalna
+    ticker = "^NSEI"
     data = yf.download(tickers=ticker, period='1d', interval='1m', progress=False)
     
     if not data.empty:
-        # Naye format ke liye ye line update ki hai
         current_price = float(data['Close'].iloc[-1])
-        print(f"Nifty Live Price: {current_price:.2f}")
-        
         avg_5min = float(data['Close'].tail(5).mean())
         
+        st.metric("Nifty Price", f"₹{current_price:.2f}")
+        
         if current_price > avg_5min:
-            print(">>> SIGNAL: Trend is UP (Bullish) <<<")
+            st.success("🚀 SIGNAL: Trend is UP (Bullish)")
         else:
-            print(">>> SIGNAL: Trend is DOWN (Bearish) <<<")
+            st.error("📉 SIGNAL: Trend is DOWN (Bearish)")
+        
+        st.line_chart(data['Close'])
     else:
-        print("Data nahi mil raha. Internet check karein.")
+        st.write("Data fetching mein dikkat hai.")
 
-while True:
-    try:
-        check_market()
-    except Exception as e:
-        print(f"Error: {e}")
-    print("-" * 30)
-    time.sleep(60)
+# Button click par refresh hoga
+if st.button('Refresh Price'):
+    check_market()
+else:
+    check_market()
