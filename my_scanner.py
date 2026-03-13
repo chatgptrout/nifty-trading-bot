@@ -1,13 +1,22 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+from datetime import datetime
+import pytz
 
-st.set_page_config(page_title="Breakout with Target/SL", layout="wide")
-st.title("🚀 Breakout Scanner: Target & SL")
+st.set_page_config(page_title="Pro Breakout Scanner", layout="wide")
+
+# Timezone set karna (India)
+IST = pytz.timezone('Asia/Kolkata')
+current_time = datetime.now(IST).strftime('%Y-%m-%d | %H:%M:%S')
+
+# UI elements
+st.title("🚀 Intraday Breakout Scanner")
+st.subheader(f"🕒 Last Updated: {current_time}")
 
 stocks = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'ICICIBANK.NS', 'INFY.NS', 'BHARTIARTL.NS', 'SBIN.NS', 'ITC.NS', 'ADANIENT.NS', 'TATAMOTORS.NS']
 
-def scan_with_levels():
+def scan_with_time():
     results = []
     for symbol in stocks:
         data = yf.download(symbol, period='2d', interval='5m', progress=False)
@@ -16,8 +25,7 @@ def scan_with_levels():
             prev_high = float(data['High'].iloc[:-1].max())
             prev_low = float(data['Low'].iloc[:-1].min())
             
-            # Simple Intraday Logic:
-            # Target = Buy Price + 1% | SL = Buy Price - 0.5%
+            # Calculations
             target = prev_high * 1.01
             sl = prev_high * 0.995
             
@@ -25,8 +33,8 @@ def scan_with_levels():
             
             results.append({
                 "Stock": symbol.replace(".NS", ""),
-                "Price": current_price,
-                "Buy Above": prev_high,
+                "Price": round(current_price, 2),
+                "Buy Above": round(prev_high, 2),
                 "Target (1%)": round(target, 2),
                 "Stop Loss": round(sl, 2),
                 "Status": status
@@ -35,7 +43,7 @@ def scan_with_levels():
     df = pd.DataFrame(results)
     st.table(df)
 
-if st.button('Scan Market'):
-    scan_with_levels()
+if st.button('🔄 Refresh & Scan'):
+    scan_with_time()
 else:
-    scan_with_levels()
+    scan_with_time()
