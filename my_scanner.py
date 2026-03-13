@@ -2,62 +2,40 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.set_page_config(page_title="Stock Breakout Scanner", layout="wide")
-st.title("🚀 Intraday Breakout & Breakdown Scanner")
-st.write("Ye scanner Nifty ke top stocks ko scan karke breakout levels batata hai.")
+st.set_page_config(page_title="Breakout with Target/SL", layout="wide")
+st.title("🚀 Breakout Scanner: Target & SL")
 
-# List of Stocks
 stocks = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'ICICIBANK.NS', 'INFY.NS', 'BHARTIARTL.NS', 'SBIN.NS', 'ITC.NS', 'ADANIENT.NS', 'TATAMOTORS.NS']
 
-def scan_stocks():
-    breakout_list = []
-    breakdown_list = []
-    watchlist = []
-
+def scan_with_levels():
+    results = []
     for symbol in stocks:
-        # 2 din ka data taaki kal ka high/low mil sake
         data = yf.download(symbol, period='2d', interval='5m', progress=False)
-        
         if len(data) >= 2:
-            # Latest price
             current_price = float(data['Close'].iloc[-1])
+            prev_high = float(data['High'].iloc[:-1].max())
+            prev_low = float(data['Low'].iloc[:-1].min())
             
-            # Kal ke data se High aur Low nikalna
-            # Sabhi columns ko simple numbers mein convert kiya
-            prev_day_data = data.iloc[:-1] 
-            prev_high = float(prev_day_data['High'].max())
-            prev_low = float(prev_day_data['Low'].min())
+            # Simple Intraday Logic:
+            # Target = Buy Price + 1% | SL = Buy Price - 0.5%
+            target = prev_high * 1.01
+            sl = prev_high * 0.995
             
-            if current_price > prev_high:
-                breakout_list.append([symbol, current_price, prev_high, "🚀 BREAKOUT"])
-            elif current_price < prev_low:
-                breakdown_list.append([symbol, current_price, prev_low, "📉 BREAKDOWN"])
-            else:
-                watchlist.append([symbol, current_price, prev_high, prev_low])
+            status = "🚀 BREAKOUT" if current_price > prev_high else "📉 BREAKDOWN" if current_price < prev_low else "⚖️ WAIT"
+            
+            results.append({
+                "Stock": symbol.replace(".NS", ""),
+                "Price": current_price,
+                "Buy Above": prev_high,
+                "Target (1%)": round(target, 2),
+                "Stop Loss": round(sl, 2),
+                "Status": status
+            })
 
-    # Display results
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.header("🔥 Breakout Stocks")
-        if breakout_list:
-            st.table(pd.DataFrame(breakout_list, columns=['Stock', 'Price', 'High', 'Signal']))
-        else:
-            st.info("Abhi koi breakout nahi mila.")
+    df = pd.DataFrame(results)
+    st.table(df)
 
-    with col2:
-        st.header("❄️ Breakdown Stocks")
-        if breakdown_list:
-            st.table(pd.DataFrame(breakdown_list, columns=['Stock', 'Price', 'Low', 'Signal']))
-        else:
-            st.info("Abhi koi breakdown nahi mila.")
-
-    st.divider()
-    st.header("👀 Watchlist (Nifty Top 10)")
-    if watchlist:
-        st.table(pd.DataFrame(watchlist, columns=['Stock', 'Price', 'Buy Above', 'Sell Below']))
-
-if st.button('Scan Market Now'):
-    scan_stocks()
+if st.button('Scan Market'):
+    scan_with_levels()
 else:
-    scan_stocks()
+    scan_with_levels()
