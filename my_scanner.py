@@ -6,17 +6,16 @@ import pytz
 
 st.set_page_config(page_title="Pro Breakout Scanner", layout="wide")
 
-# Timezone set karna (India)
+# India Timezone
 IST = pytz.timezone('Asia/Kolkata')
 current_time = datetime.now(IST).strftime('%Y-%m-%d | %H:%M:%S')
 
-# UI elements
 st.title("🚀 Intraday Breakout Scanner")
-st.subheader(f"🕒 Last Updated: {current_time}")
+st.subheader(f"🕒 Time: {current_time} (IST)")
 
 stocks = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'ICICIBANK.NS', 'INFY.NS', 'BHARTIARTL.NS', 'SBIN.NS', 'ITC.NS', 'ADANIENT.NS', 'TATAMOTORS.NS']
 
-def scan_with_time():
+def scan_market():
     results = []
     for symbol in stocks:
         data = yf.download(symbol, period='2d', interval='5m', progress=False)
@@ -24,8 +23,9 @@ def scan_with_time():
             current_price = float(data['Close'].iloc[-1])
             prev_high = float(data['High'].iloc[:-1].max())
             prev_low = float(data['Low'].iloc[:-1].min())
+            volume = int(data['Volume'].iloc[-1]) # Current Volume
             
-            # Calculations
+            # Target (1%) & SL (0.5%)
             target = prev_high * 1.01
             sl = prev_high * 0.995
             
@@ -35,15 +35,15 @@ def scan_with_time():
                 "Stock": symbol.replace(".NS", ""),
                 "Price": round(current_price, 2),
                 "Buy Above": round(prev_high, 2),
-                "Target (1%)": round(target, 2),
+                "Target": round(target, 2),
                 "Stop Loss": round(sl, 2),
+                "Volume": volume,
                 "Status": status
             })
 
-    df = pd.DataFrame(results)
-    st.table(df)
+    st.table(pd.DataFrame(results))
 
-if st.button('🔄 Refresh & Scan'):
-    scan_with_time()
+if st.button('🔄 Refresh Market Data'):
+    scan_market()
 else:
-    scan_with_time()
+    scan_market()
