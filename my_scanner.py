@@ -47,3 +47,4 @@ if st.button('🔄 Refresh Market Data'):
     scan_market()
 else:
     scan_market()
+    
