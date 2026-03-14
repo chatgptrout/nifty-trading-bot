@@ -1,3 +1,3 @@
 stoxkart-superr
-pytz
 pandas
+pytz
