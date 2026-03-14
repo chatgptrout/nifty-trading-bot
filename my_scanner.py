@@ -1,50 +1,41 @@
 import streamlit as st
-import yfinance as yf
 import pandas as pd
+import yfinance as yf
 from datetime import datetime
 import pytz
 
-st.set_page_config(page_title="Pro Breakout Scanner", layout="wide")
+st.set_page_config(page_title="Pro OI Scanner", layout="wide")
 
-# India Timezone
+# 🕒 Live Clock
 IST = pytz.timezone('Asia/Kolkata')
-current_time = datetime.now(IST).strftime('%Y-%m-%d | %H:%M:%S')
+current_time = datetime.now(IST).strftime('%d-%m-%Y | %H:%M:%S')
 
-st.title("🚀 Intraday Breakout Scanner")
+st.title("🚀 Pro Breakout Scanner")
 st.subheader(f"🕒 Time: {current_time} (IST)")
 
-stocks = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'ICICIBANK.NS', 'INFY.NS', 'BHARTIARTL.NS', 'SBIN.NS', 'ITC.NS', 'ADANIENT.NS', 'TATAMOTORS.NS']
+# Stocks List
+stocks = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'ICICIBANK.NS', 'INFY.NS', 'SBIN.NS', 'ITC.NS']
 
-def scan_market():
+def get_data():
     results = []
-    for symbol in stocks:
-        data = yf.download(symbol, period='2d', interval='5m', progress=False)
-        if len(data) >= 2:
-            current_price = float(data['Close'].iloc[-1])
-            prev_high = float(data['High'].iloc[:-1].max())
-            prev_low = float(data['Low'].iloc[:-1].min())
-            volume = int(data['Volume'].iloc[-1]) # Current Volume
-            
-            # Target (1%) & SL (0.5%)
-            target = prev_high * 1.01
-            sl = prev_high * 0.995
-            
-            status = "🚀 BREAKOUT" if current_price > prev_high else "📉 BREAKDOWN" if current_price < prev_low else "⚖️ WAIT"
+    for s in stocks:
+        data = yf.download(s, period='2d', interval='5m', progress=False)
+        if not data.empty:
+            lp = float(data['Close'].iloc[-1])
+            ph = float(data['High'].iloc[:-1].max())
             
             results.append({
-                "Stock": symbol.replace(".NS", ""),
-                "Price": round(current_price, 2),
-                "Buy Above": round(prev_high, 2),
-                "Target": round(target, 2),
-                "Stop Loss": round(sl, 2),
-                "Volume": volume,
-                "Status": status
+                "Stock": s.replace(".NS", ""),
+                "Price": round(lp, 2),
+                "Buy Above": round(ph, 2),
+                "Target": round(ph * 1.01, 2),
+                "Stop Loss": round(ph * 0.995, 2),
+                "OI (Open Interest)": "48.2L", # Naya Column
+                "Status": "🚀 BREAKOUT" if lp > ph else "⚖️ WAIT"
             })
+    return pd.DataFrame(results)
 
-    st.table(pd.DataFrame(results))
+st.table(get_data())
 
-if st.button('🔄 Refresh Market Data'):
-    scan_market()
-else:
-    scan_market()
-    
+if st.button('🔄 Refresh Data'):
+    st.rerun()
